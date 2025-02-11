@@ -10,11 +10,24 @@ load_dotenv()
 
 # Initialize argument parser
 parser = argparse.ArgumentParser(description='FastMCP server for Chroma DB')
-parser.add_argument('--tenant', help='Chroma tenant', default=os.getenv('CHROMA_TENANT'))
-parser.add_argument('--database', help='Chroma database', default=os.getenv('CHROMA_DATABASE'))
-parser.add_argument('--api-key', help='Chroma API key', default=os.getenv('CHROMA_API_KEY'))
-parser.add_argument('--host', help='Chroma host', default=os.getenv('CHROMA_HOST', 'api.trychroma.com'))
-parser.add_argument('--ssl', help='Use SSL', type=bool, default=os.getenv('CHROMA_SSL', 'true').lower() == 'true')
+parser.add_argument('--client-type', 
+                   choices=['http', 'persistent', 'ephemeral'],
+                   default='http',
+                   help='Type of Chroma client to use')
+parser.add_argument('--data-dir',
+                   default='./data',
+                   help='Directory for persistent client data (only used with persistent client)')
+parser.add_argument('--tenant', help='Chroma tenant (only used with http client)', 
+                   default=os.getenv('CHROMA_TENANT'))
+parser.add_argument('--database', help='Chroma database (only used with http client)', 
+                   default=os.getenv('CHROMA_DATABASE'))
+parser.add_argument('--api-key', help='Chroma API key (only used with http client)', 
+                   default=os.getenv('CHROMA_API_KEY'))
+parser.add_argument('--host', help='Chroma host (only used with http client)', 
+                   default=os.getenv('CHROMA_HOST', 'api.trychroma.com'))
+parser.add_argument('--ssl', help='Use SSL (only used with http client)', 
+                   type=bool, 
+                   default=os.getenv('CHROMA_SSL', 'true').lower() == 'true')
 
 # Initialize FastMCP server
 mcp = FastMCP("chroma")
@@ -30,15 +43,23 @@ def get_chroma_client():
         if _args is None:
             _args = parser.parse_args()
         
-        _chroma_client = chromadb.HttpClient(
-            ssl=_args.ssl,
-            host=_args.host,
-            tenant=_args.tenant,
-            database=_args.database,
-            headers={
-                'x-chroma-token': _args.api_key
-            }
-        )
+        if _args.client_type == 'http':
+            _chroma_client = chromadb.HttpClient(
+                ssl=_args.ssl,
+                host=_args.host,
+                tenant=_args.tenant,
+                database=_args.database,
+                headers={
+                    'x-chroma-token': _args.api_key
+                }
+            )
+        elif _args.client_type == 'persistent':
+            data_dir = os.path.join(os.path.dirname(__file__), _args.data_dir)
+            os.makedirs(data_dir, exist_ok=True)
+            _chroma_client = chromadb.PersistentClient(path=data_dir)
+        else:  # ephemeral
+            _chroma_client = chromadb.EphemeralClient()
+            
     return _chroma_client
 
 @mcp.tool()
@@ -253,13 +274,14 @@ if __name__ == "__main__":
     # Parse arguments before running the server
     _args = parser.parse_args()
     
-    # Validate required arguments
-    if not _args.tenant:
-        parser.error("Tenant must be provided via --tenant flag or CHROMA_TENANT environment variable")
-    if not _args.database:
-        parser.error("Database must be provided via --database flag or CHROMA_DATABASE environment variable")
-    if not _args.api_key:
-        parser.error("API key must be provided via --api-key flag or CHROMA_API_KEY environment variable")
+    # Validate required arguments for HTTP client
+    if _args.client_type == 'http':
+        if not _args.tenant:
+            parser.error("Tenant must be provided via --tenant flag or CHROMA_TENANT environment variable when using HTTP client")
+        if not _args.database:
+            parser.error("Database must be provided via --database flag or CHROMA_DATABASE environment variable when using HTTP client")
+        if not _args.api_key:
+            parser.error("API key must be provided via --api-key flag or CHROMA_API_KEY environment variable when using HTTP client")
     
     # Initialize and run the server
     mcp.run(transport='stdio')
