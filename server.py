@@ -12,7 +12,7 @@ load_dotenv()
 parser = argparse.ArgumentParser(description='FastMCP server for Chroma DB')
 parser.add_argument('--client-type', 
                    choices=['http', 'persistent', 'ephemeral'],
-                   default='http',
+                   default='ephemeral',
                    help='Type of Chroma client to use')
 parser.add_argument('--data-dir',
                    default='./data',
@@ -62,6 +62,126 @@ def get_chroma_client():
             
     return _chroma_client
 
+##### Collection Tools #####
+@mcp.tool()
+async def create_collection(collection_name: str) -> str:
+    """Create a new Chroma collection.
+    
+    Args:
+        collection_name: Name of the collection to create
+    """
+    client = get_chroma_client()
+    client.create_collection(collection_name)
+    return f"Successfully created collection {collection_name}"
+
+@mcp.tool()
+async def peek_collection(
+    collection_name: str,
+    limit: int = 5
+) -> Dict:
+    """Peek at documents in a Chroma collection.
+    
+    Args:
+        collection_name: Name of the collection to peek into
+        limit: Number of documents to peek at
+    """
+    client = get_chroma_client()
+    collection = client.get_collection(collection_name)
+    results = collection.peek(limit=limit)
+    return results
+
+@mcp.tool()
+async def list_collections(
+    limit: Optional[int] = None,
+    offset: Optional[int] = None
+) -> List[str]:
+    """List all collection names in the Chroma database with pagination support.
+    
+    Args:
+        limit: Optional maximum number of collections to return
+        offset: Optional number of collections to skip before returning results
+    
+    Returns:
+        List of collection names
+    """
+    client = get_chroma_client()
+    return client.list_collections(limit=limit, offset=offset)
+
+@mcp.tool()
+async def get_collection_info(collection_name: str) -> Dict:
+    """Get information about a Chroma collection.
+    
+    Args:
+        collection_name: Name of the collection to get info about
+    """
+    client = get_chroma_client()
+    collection = client.get_collection(collection_name)
+    
+    # Get collection count
+    count = collection.count()
+    
+    # Peek at a few documents
+    peek_results = collection.peek(limit=3)
+    
+    return {
+        "name": collection_name,
+        "count": count,
+        "sample_documents": peek_results
+    }
+    
+@mcp.tool()
+async def get_collection_count(collection_name: str) -> int:
+    """Get the number of documents in a Chroma collection.
+    
+    Args:
+        collection_name: Name of the collection to count
+    """
+    client = get_chroma_client()
+    collection = client.get_collection(collection_name)
+    return collection.count()
+
+@mcp.tool()
+async def modify_collection(
+    collection_name: str,
+    new_name: Optional[str] = None,
+    new_metadata: Optional[Dict] = None
+) -> str:
+    """Modify a Chroma collection's name or metadata.
+    
+    Args:
+        collection_name: Name of the collection to modify
+        new_name: Optional new name for the collection
+        new_metadata: Optional new metadata for the collection
+    """
+    client = get_chroma_client()
+    collection = client.get_collection(collection_name)
+    
+    if new_name:
+        collection.modify(name=new_name)
+    if new_metadata:
+        collection.modify(metadata=new_metadata)
+    
+    modified_aspects = []
+    if new_name:
+        modified_aspects.append("name")
+    if new_metadata:
+        modified_aspects.append("metadata")
+    
+    return f"Successfully modified collection {collection_name}: updated {' and '.join(modified_aspects)}"
+
+    
+@mcp.tool()
+async def delete_collection(collection_name: str) -> str:
+    """Delete a Chroma collection.
+    
+    Args:
+        collection_name: Name of the collection to delete
+    """
+    client = get_chroma_client()
+    client.delete_collection(collection_name)
+    return f"Successfully deleted collection {collection_name}"
+
+##### Document Tools #####
 @mcp.tool()
 async def add_documents(
     collection_name: str,
@@ -127,112 +247,6 @@ async def query_documents(
         where_document=where_document,
         include=include
     )
-
-@mcp.tool()
-async def get_collection_info(collection_name: str) -> Dict:
-    """Get information about a Chroma collection.
-    
-    Args:
-        collection_name: Name of the collection to get info about
-    """
-    client = get_chroma_client()
-    collection = client.get_collection(collection_name)
-    
-    # Get collection count
-    count = collection.count()
-    
-    # Peek at a few documents
-    peek_results = collection.peek(limit=3)
-    
-    return {
-        "name": collection_name,
-        "count": count,
-        "sample_documents": peek_results
-    }
-
-@mcp.tool()
-async def delete_collection(collection_name: str) -> str:
-    """Delete a Chroma collection.
-    
-    Args:
-        collection_name: Name of the collection to delete
-    """
-    client = get_chroma_client()
-    client.delete_collection(collection_name)
-    return f"Successfully deleted collection {collection_name}"
-
-@mcp.tool()
-async def peek_collection(
-    collection_name: str,
-    limit: int = 5
-) -> Dict:
-    """Peek at documents in a Chroma collection.
-    
-    Args:
-        collection_name: Name of the collection to peek into
-        limit: Number of documents to peek at
-    """
-    client = get_chroma_client()
-    collection = client.get_collection(collection_name)
-    results = collection.peek(limit=limit)
-    return results
-
-@mcp.tool()
-async def get_collection_count(collection_name: str) -> int:
-    """Get the number of documents in a Chroma collection.
-    
-    Args:
-        collection_name: Name of the collection to count
-    """
-    client = get_chroma_client()
-    collection = client.get_collection(collection_name)
-    return collection.count()
-
-@mcp.tool()
-async def modify_collection(
-    collection_name: str,
-    new_name: Optional[str] = None,
-    new_metadata: Optional[Dict] = None
-) -> str:
-    """Modify a Chroma collection's name or metadata.
-    
-    Args:
-        collection_name: Name of the collection to modify
-        new_name: Optional new name for the collection
-        new_metadata: Optional new metadata for the collection
-    """
-    client = get_chroma_client()
-    collection = client.get_collection(collection_name)
-    
-    if new_name:
-        collection.modify(name=new_name)
-    if new_metadata:
-        collection.modify(metadata=new_metadata)
-    
-    modified_aspects = []
-    if new_name:
-        modified_aspects.append("name")
-    if new_metadata:
-        modified_aspects.append("metadata")
-    
-    return f"Successfully modified collection {collection_name}: updated {' and '.join(modified_aspects)}"
-
-@mcp.tool()
-async def list_collections(
-    limit: Optional[int] = None,
-    offset: Optional[int] = None
-) -> List[str]:
-    """List all collection names in the Chroma database with pagination support.
-    
-    Args:
-        limit: Optional maximum number of collections to return
-        offset: Optional number of collections to skip before returning results
-    
-    Returns:
-        List of collection names
-    """
-    client = get_chroma_client()
-    return client.list_collections(limit=limit, offset=offset)
 
 @mcp.tool()
 async def get_documents(
