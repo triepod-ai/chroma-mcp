@@ -60,6 +60,8 @@ def get_chroma_client():
                 }
             )
         elif _args.client_type == 'persistent':
+            if not _args.data_dir.startswith('/'):
+                raise ValueError("Data directory must start with / when using persistent client")
             data_dir = os.path.join(os.path.dirname(__file__), _args.data_dir)
             os.makedirs(data_dir, exist_ok=True)
             _chroma_client = chromadb.PersistentClient(path=data_dir)
@@ -343,4 +345,3 @@ if __name__ == "__main__":
     
     # Initialize and run the server
     mcp.run(transport='stdio')
-    
