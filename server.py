@@ -3,27 +3,40 @@ import chromadb
 from mcp.server.fastmcp import FastMCP
 import os
 from dotenv import load_dotenv
+import argparse
 
 # Load environment variables from .env file if it exists
 load_dotenv()
 
+# Initialize argument parser
+parser = argparse.ArgumentParser(description='FastMCP server for Chroma DB')
+parser.add_argument('--tenant', help='Chroma tenant', default=os.getenv('CHROMA_TENANT'))
+parser.add_argument('--database', help='Chroma database', default=os.getenv('CHROMA_DATABASE'))
+parser.add_argument('--api-key', help='Chroma API key', default=os.getenv('CHROMA_API_KEY'))
+parser.add_argument('--host', help='Chroma host', default=os.getenv('CHROMA_HOST', 'api.trychroma.com'))
+parser.add_argument('--ssl', help='Use SSL', type=bool, default=os.getenv('CHROMA_SSL', 'true').lower() == 'true')
+
 # Initialize FastMCP server
 mcp = FastMCP("chroma")
 
-# Global client instance
+# Global variables
 _chroma_client = None
+_args = None
 
 def get_chroma_client():
     """Get or create the global Chroma client instance."""
-    global _chroma_client
+    global _chroma_client, _args
     if _chroma_client is None:
+        if _args is None:
+            _args = parser.parse_args()
+        
         _chroma_client = chromadb.HttpClient(
-            ssl=os.getenv('CHROMA_SSL', 'true').lower() == 'true',
-            host=os.getenv('CHROMA_HOST', 'api.trychroma.com'),
-            tenant=os.getenv('CHROMA_TENANT'),
-            database=os.getenv('CHROMA_DATABASE'),
+            ssl=_args.ssl,
+            host=_args.host,
+            tenant=_args.tenant,
+            database=_args.database,
             headers={
-                'x-chroma-token': os.getenv('CHROMA_API_KEY')
+                'x-chroma-token': _args.api_key
             }
         )
     return _chroma_client
@@ -237,6 +250,17 @@ async def get_documents(
     )
 
 if __name__ == "__main__":
+    # Parse arguments before running the server
+    _args = parser.parse_args()
+    
+    # Validate required arguments
+    if not _args.tenant:
+        parser.error("Tenant must be provided via --tenant flag or CHROMA_TENANT environment variable")
+    if not _args.database:
+        parser.error("Database must be provided via --database flag or CHROMA_DATABASE environment variable")
+    if not _args.api_key:
+        parser.error("API key must be provided via --api-key flag or CHROMA_API_KEY environment variable")
+    
     # Initialize and run the server
     mcp.run(transport='stdio')
     
