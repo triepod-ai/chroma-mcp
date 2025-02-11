@@ -64,7 +64,8 @@ async def query_documents(
     query_texts: List[str],
     n_results: int = 5,
     where: Optional[Dict] = None,
-    where_document: Optional[Dict] = None
+    where_document: Optional[Dict] = None,
+    include: Optional[List[str]] = None
 ) -> Dict:
     """Query documents from a Chroma collection with advanced filtering.
     
@@ -78,24 +79,20 @@ async def query_documents(
                - Comparison: {"metadata_field": {"$gt": 5}}
                - Logical AND: {"$and": [{"field1": {"$eq": "value1"}}, {"field2": {"$gt": 5}}]}
                - Logical OR: {"$or": [{"field1": {"$eq": "value1"}}, {"field1": {"$eq": "value2"}}]}
-               - Contains/In: {"metadata_field": {"$in": ["value1", "value2"]}}
-               Supported operators: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin
         where_document: Optional document content filters
-               Examples:
-               - Contains text: {"$contains": "search text"}
-               - Does not contain: {"$not_contains": "excluded text"}
+        include: Optional list of what to include in response. Can contain any of:
+                ["documents", "embeddings", "metadatas", "distances"]
     """
     client = get_chroma_client()
     collection = client.get_collection(collection_name)
     
-    results = collection.query(
+    return collection.query(
         query_texts=query_texts,
         n_results=n_results,
         where=where,
-        where_document=where_document
+        where_document=where_document,
+        include=include
     )
-    
-    return results
 
 @mcp.tool()
 async def get_collection_info(collection_name: str) -> Dict:
@@ -185,6 +182,59 @@ async def modify_collection(
         modified_aspects.append("metadata")
     
     return f"Successfully modified collection {collection_name}: updated {' and '.join(modified_aspects)}"
+
+@mcp.tool()
+async def list_collections(
+    limit: Optional[int] = None,
+    offset: Optional[int] = None
+) -> List[str]:
+    """List all collection names in the Chroma database with pagination support.
+    
+    Args:
+        limit: Optional maximum number of collections to return
+        offset: Optional number of collections to skip before returning results
+    
+    Returns:
+        List of collection names
+    """
+    client = get_chroma_client()
+    return client.list_collections(limit=limit, offset=offset)
+
+@mcp.tool()
+async def get_documents(
+    collection_name: str,
+    ids: Optional[List[str]] = None,
+    where: Optional[Dict] = None,
+    where_document: Optional[Dict] = None,
+    include: Optional[List[str]] = None
+) -> Dict:
+    """Get documents from a Chroma collection with optional filtering.
+    
+    Args:
+        collection_name: Name of the collection to get documents from
+        ids: Optional list of document IDs to retrieve
+        where: Optional metadata filters using Chroma's query operators
+               Examples:
+               - Simple equality: {"metadata_field": "value"}
+               - Comparison: {"metadata_field": {"$gt": 5}}
+               - Logical AND: {"$and": [{"field1": {"$eq": "value1"}}, {"field2": {"$gt": 5}}]}
+               - Logical OR: {"$or": [{"field1": {"$eq": "value1"}}, {"field1": {"$eq": "value2"}}]}
+        where_document: Optional document content filters
+        include: Optional list of what to include in response. Can contain any of:
+                ["documents", "embeddings", "metadatas"]
+    
+    Returns:
+        Dictionary containing the matching documents, their IDs, and requested includes
+    """
+    client = get_chroma_client()
+    collection = client.get_collection(collection_name)
+    
+    return collection.get(
+        ids=ids,
+        where=where,
+        where_document=where_document,
+        include=include
+    )
 
 if __name__ == "__main__":
     # Initialize and run the server
