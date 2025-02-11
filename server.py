@@ -15,7 +15,7 @@ parser.add_argument('--client-type',
                    default='ephemeral',
                    help='Type of Chroma client to use')
 parser.add_argument('--data-dir',
-                   default='./data',
+                   default='/data',
                    help='Directory for persistent client data (only used with persistent client)')
 parser.add_argument('--tenant', help='Chroma tenant (only used with http client)', 
                    default=os.getenv('CHROMA_TENANT'))
@@ -44,6 +44,12 @@ def get_chroma_client():
             _args = parser.parse_args()
         
         if _args.client_type == 'http':
+            if not _args.tenant:
+                raise ValueError("Tenant must be provided via --tenant flag or CHROMA_TENANT environment variable when using HTTP client")
+            if not _args.database:
+                raise ValueError("Database must be provided via --database flag or CHROMA_DATABASE environment variable when using HTTP client")
+            if not _args.api_key:
+                raise ValueError("API key must be provided via --api-key flag or CHROMA_API_KEY environment variable when using HTTP client")
             _chroma_client = chromadb.HttpClient(
                 ssl=_args.ssl,
                 host=_args.host,
@@ -64,15 +70,53 @@ def get_chroma_client():
 
 ##### Collection Tools #####
 @mcp.tool()
-async def create_collection(collection_name: str) -> str:
-    """Create a new Chroma collection.
+async def create_collection(
+    collection_name: str,
+    hnsw_space: Optional[str] = None,
+    hnsw_construction_ef: Optional[int] = None,
+    hnsw_search_ef: Optional[int] = None,
+    hnsw_M: Optional[int] = None,
+    hnsw_num_threads: Optional[int] = None,
+    hnsw_resize_factor: Optional[float] = None,
+    hnsw_batch_size: Optional[int] = None,
+    hnsw_sync_threshold: Optional[int] = None
+) -> str:
+    """Create a new Chroma collection with configurable HNSW parameters.
     
     Args:
         collection_name: Name of the collection to create
+        hnsw_space: Distance function used in HNSW index. Options: 'l2', 'ip', 'cosine'
+        hnsw_construction_ef: Size of the dynamic candidate list for constructing the HNSW graph
+        hnsw_search_ef: Size of the dynamic candidate list for searching the HNSW graph
+        hnsw_M: Number of bi-directional links created for every new element
+        hnsw_num_threads: Number of threads to use during HNSW construction
+        hnsw_resize_factor: Factor to resize the index by when it's full
+        hnsw_batch_size: Number of elements to batch together during index construction
+        hnsw_sync_threshold: Number of elements to process before syncing index to disk
     """
     client = get_chroma_client()
-    client.create_collection(collection_name)
-    return f"Successfully created collection {collection_name}"
+    
+    # Build HNSW configuration directly in metadata, only including non-None values
+    metadata = {
+        k: v for k, v in {
+            "hnsw:space": hnsw_space,
+            "hnsw:construction_ef": hnsw_construction_ef,
+            "hnsw:M": hnsw_M,
+            "hnsw:search_ef": hnsw_search_ef,
+            "hnsw:num_threads": hnsw_num_threads,
+            "hnsw:resize_factor": hnsw_resize_factor,
+            "hnsw:batch_size": hnsw_batch_size,
+            "hnsw:sync_threshold": hnsw_sync_threshold
+        }.items() if v is not None
+    }
+    
+    client.create_collection(
+        name=collection_name,
+        metadata=metadata if metadata else None
+    )
+    
+    config_msg = f" with HNSW configuration: {metadata}" if metadata else ""
+    return f"Successfully created collection {collection_name}{config_msg}"
 
 @mcp.tool()
 async def peek_collection(
