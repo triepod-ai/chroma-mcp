@@ -298,7 +298,9 @@ async def get_documents(
     ids: Optional[List[str]] = None,
     where: Optional[Dict] = None,
     where_document: Optional[Dict] = None,
-    include: Optional[List[str]] = None
+    include: Optional[List[str]] = None,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None
 ) -> Dict:
     """Get documents from a Chroma collection with optional filtering.
     
@@ -314,6 +316,8 @@ async def get_documents(
         where_document: Optional document content filters
         include: Optional list of what to include in response. Can contain any of:
                 ["documents", "embeddings", "metadatas"]
+        limit: Optional maximum number of documents to return
+        offset: Optional number of documents to skip before returning results
     
     Returns:
         Dictionary containing the matching documents, their IDs, and requested includes
@@ -325,7 +329,9 @@ async def get_documents(
         ids=ids,
         where=where,
         where_document=where_document,
-        include=include
+        include=include,
+        limit=limit,
+        offset=offset
     )
 
 if __name__ == "__main__":
