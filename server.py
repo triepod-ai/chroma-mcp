@@ -12,10 +12,10 @@ load_dotenv()
 parser = argparse.ArgumentParser(description='FastMCP server for Chroma DB')
 parser.add_argument('--client-type', 
                    choices=['http', 'persistent', 'ephemeral'],
-                   default='ephemeral',
+                   default=os.getenv('CHROMA_CLIENT_TYPE', 'ephemeral'),
                    help='Type of Chroma client to use')
 parser.add_argument('--data-dir',
-                   default='/data',
+                   default=os.getenv('CHROMA_DATA_DIR'),
                    help='Directory for persistent client data (only used with persistent client)')
 parser.add_argument('--tenant', help='Chroma tenant (only used with http client)', 
                    default=os.getenv('CHROMA_TENANT'))
@@ -60,11 +60,9 @@ def get_chroma_client():
                 }
             )
         elif _args.client_type == 'persistent':
-            if not _args.data_dir.startswith('/'):
-                raise ValueError("Data directory must start with / when using persistent client")
-            data_dir = os.path.join(os.path.dirname(__file__), _args.data_dir)
-            os.makedirs(data_dir, exist_ok=True)
-            _chroma_client = chromadb.PersistentClient(path=data_dir)
+            if not _args.data_dir:
+                raise ValueError("Data directory must be provided via --data-dir flag when using persistent client")
+            _chroma_client = chromadb.PersistentClient(path=_args.data_dir)
         else:  # ephemeral
             _chroma_client = chromadb.EphemeralClient()
             
