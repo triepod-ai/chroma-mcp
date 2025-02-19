@@ -121,5 +121,8 @@ export CHROMA_TENANT="your-tenant-id"
 export CHROMA_DATABASE="your-database-name"
 export CHROMA_API_KEY="your-api-key"
 export CHROMA_SSL="true"
+export CHROMA_HOST="your-host"
+export CHROMA_PORT="your-port"
+export CHROMA_CUSTOM_AUTH_CREDENTIALS="your-custom-auth-credentials"
 ```
 
