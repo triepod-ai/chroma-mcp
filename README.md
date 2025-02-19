@@ -1,6 +1,6 @@
 # Chroma MCP Server
 
-[The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that enables seamless integration between LLM applications and external data sources and tools. Whether you’re building an AI-powered IDE, enhancing a chat interface, or creating custom AI workflows, MCP provides a standardized way to connect LLMs with the context they need.
+[The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol designed for effortless integration between LLM applications and external data sources or tools, offering a standardized framework to seamlessly provide LLMs with the context they require.
 
 This server provides vector database capabilities for Chroma, enabling AI models to interact with vector embeddings and perform semantic search operations through a standardized interface.
 
@@ -67,7 +67,7 @@ This server provides vector database capabilities for Chroma, enabling AI models
 
 This will create a persistent client that will use the data directory specified.
 
-3. To add a HTTP client, add the following to your `claude_desktop_config.json` file:
+3. To add an HTTP client to connect to Chroma Cloud, add the following to your `claude_desktop_config.json` file:
 
 ```json
 "chroma": {
@@ -90,6 +90,26 @@ This will create a persistent client that will use the data directory specified.
 
 This will create a HTTP client that will use the tenant, database, and API key specified.
 
+4. To add an HTTP client to connect to a Chroma server, add the following to your `claude_desktop_config.json` file:
+
+```json
+"chroma": {
+    "command": "uvx",
+    "args": [
+      "chroma-mcp", 
+      "--client-type", 
+      "http", 
+      "--host", 
+      "your-host", 
+      "--port", 
+      "your-port", 
+      "--custom-auth-credentials",
+      "your-custom-auth-credentials"
+    ]
+}
+```
+
+This will create a HTTP client that will use the host, port, and custom auth credentials specified.
 ### Using Environment Variables
 
 You can also use environment variables to configure the client type, tenant, database, and API key.
