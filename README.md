@@ -8,8 +8,8 @@ This server provides vector database capabilities for Chroma, enabling AI models
 
 - **Flexible Client Types**
   - Ephemeral (in-memory) for testing and development
-  - Persistent for local production deployments
-  - HTTP client for Chroma Cloud integration
+  - Persistent for file-based storage
+  - HTTP client for Chroma Cloud & custom server integration
 
 - **Collection Management**
   - Create, modify, and delete collections
