@@ -2,14 +2,15 @@
 
 [The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol designed for effortless integration between LLM applications and external data sources or tools, offering a standardized framework to seamlessly provide LLMs with the context they require.
 
-This server provides vector database capabilities for Chroma, enabling AI models to interact with vector embeddings and perform semantic search operations through a standardized interface.
+This server provides data retrieval capabilities powered by Chroma, enabling AI models to create collections over generated data and user inputs, and retrieve that data using vector search, full text search, metadata filtering, and more.
 
 ## Features
 
 - **Flexible Client Types**
   - Ephemeral (in-memory) for testing and development
   - Persistent for file-based storage
-  - HTTP client for Chroma Cloud & custom server integration
+  - HTTP client for self-hosted Chroma instances
+  - Cloud client for Chroma Cloud integration (automatically connects to api.trychroma.com)
 
 - **Collection Management**
   - Create, modify, and delete collections
@@ -67,7 +68,7 @@ This server provides vector database capabilities for Chroma, enabling AI models
 
 This will create a persistent client that will use the data directory specified.
 
-3. To add an HTTP client to connect to Chroma Cloud, add the following to your `claude_desktop_config.json` file:
+3. To connect to Chroma Cloud, add the following to your `claude_desktop_config.json` file:
 
 ```json
 "chroma": {
@@ -75,22 +76,21 @@ This will create a persistent client that will use the data directory specified.
     "args": [
         "chroma-mcp",
         "--client-type",
-        "http",
+        "cloud",
         "--tenant",
         "your-tenant-id",
         "--database",
         "your-database-name",
         "--api-key",
-        "your-api-key",
-        "--ssl",
-        "true"
+        "your-api-key"
     ]
 }
 ```
 
-This will create a HTTP client that will use the tenant, database, and API key specified.
+This will create a cloud client that automatically connects to api.trychroma.com using SSL.
 
-4. To add an HTTP client to connect to a Chroma server, add the following to your `claude_desktop_config.json` file:
+4. To connect to a [self-hosted Chroma instance on your own cloud provider](https://docs.trychroma.com/
+production/deployment), add the following to your `claude_desktop_config.json` file:
 
 ```json
 "chroma": {
@@ -104,25 +104,35 @@ This will create a HTTP client that will use the tenant, database, and API key s
       "--port", 
       "your-port", 
       "--custom-auth-credentials",
-      "your-custom-auth-credentials"
+      "your-custom-auth-credentials",
+      "--ssl",
+      "true"
     ]
 }
 ```
 
-This will create a HTTP client that will use the host, port, and custom auth credentials specified.
+This will create an HTTP client that connects to your self-hosted Chroma instance.
+
 ### Using Environment Variables
 
-You can also use environment variables to configure the client type, tenant, database, and API key.
+You can also use environment variables to configure the client:
 
 ```bash
-export CHROMA_CLIENT_TYPE="http"
+# Common variables
+export CHROMA_CLIENT_TYPE="http"  # or "cloud", "persistent", "ephemeral"
+
+# For persistent client
 export CHROMA_DATA_DIR="/full/path/to/your/data/directory"
+
+# For cloud client (Chroma Cloud)
 export CHROMA_TENANT="your-tenant-id"
 export CHROMA_DATABASE="your-database-name"
 export CHROMA_API_KEY="your-api-key"
-export CHROMA_SSL="true"
+
+# For HTTP client (self-hosted)
 export CHROMA_HOST="your-host"
 export CHROMA_PORT="your-port"
 export CHROMA_CUSTOM_AUTH_CREDENTIALS="your-custom-auth-credentials"
+export CHROMA_SSL="true"
 ```
 
