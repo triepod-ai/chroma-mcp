@@ -1,3 +1,27 @@
+<p align="center">
+  <a href="https://trychroma.com"><img src="https://user-images.githubusercontent.com/891664/227103090-6624bf7d-9524-4e05-9d2c-c28d5d451481.png" alt="Chroma logo"></a>
+</p>
+
+<p align="center">
+    <b>Chroma - the open-source embedding database</b>. <br />
+    The fastest way to build Python or JavaScript LLM apps with memory!
+</p>
+
+<p align="center">
+  <a href="https://discord.gg/MMeYNTmh3x" target="_blank">
+      <img src="https://img.shields.io/discord/1073293645303795742?cacheSeconds=3600" alt="Discord">
+  </a> |
+  <a href="https://github.com/chroma-core/chroma/blob/master/LICENSE" target="_blank">
+      <img src="https://img.shields.io/static/v1?label=license&message=Apache 2.0&color=white" alt="License">
+  </a> |
+  <a href="https://docs.trychroma.com/" target="_blank">
+      Docs
+  </a> |
+  <a href="https://www.trychroma.com/" target="_blank">
+      Homepage
+  </a>
+</p>
+
 # Chroma MCP Server
 
 [The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol designed for effortless integration between LLM applications and external data sources or tools, offering a standardized framework to seamlessly provide LLMs with the context they require.
