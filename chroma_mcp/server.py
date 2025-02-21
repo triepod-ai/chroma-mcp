@@ -375,8 +375,9 @@ async def get_documents(
         offset=offset
     )
 
-if __name__ == "__main__":
-    # Parse arguments before running the server
+def main():
+    """Entry point for the Chroma MCP server."""
+    global _args
     _args = parser.parse_args()
     
     # Validate required arguments based on client type
@@ -394,3 +395,6 @@ if __name__ == "__main__":
     
     # Initialize and run the server
     mcp.run(transport='stdio')
+
+if __name__ == "__main__":
+    main()
