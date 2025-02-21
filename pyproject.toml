@@ -15,3 +15,7 @@ build-backend = "hatchling.build"
 
 [project.scripts]
 chroma-mcp = "server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+include = ["server.py"]
