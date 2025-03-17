@@ -137,6 +137,10 @@ production/deployment), add the following to your `claude_desktop_config.json` f
 
 This will create an HTTP client that connects to your self-hosted Chroma instance.
 
+### Demos
+
+Find reference usages, such as shared knowledge bases & adding memory to context windows in the [Chroma MCP Docs](https://docs.trychroma.com/integrations/frameworks/anthropic-mcp#using-chroma-with-claude)
+
 ### Using Environment Variables
 
 You can also use environment variables to configure the client:
