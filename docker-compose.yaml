@@ -1,0 +1,102 @@
+services:
+  chroma:
+    image: chromadb/chroma:1.0.3
+    container_name: chroma-chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_chroma-data:/chroma/chroma_data
+      - chroma_chroma-data:/data
+    networks:
+      - chroma-network
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+      - IS_PERSISTENT=TRUE
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2"]
+    #   interval: 5s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    restart: unless-stopped
+
+  chroma-mcp:
+    build:
+      context: '.'  # Using relative path since we're already in the directory
+    container_name: chroma-mcp
+    volumes:
+      - ./logs:/app/logs  # Mount a logs directory for log files
+      - memory_chroma_data:/chroma-data  # Mount the data directory for persistent client
+    environment:
+      - CHROMA_CLIENT_TYPE=http
+      - CHROMA_HOST=chroma-chroma
+      - CHROMA_PORT=8000
+      - CHROMA_SSL=false
+      - TQDM_DISABLE=1  # Disable tqdm progress bars that interfere with JSON-RPC
+    networks:
+      - chroma-network
+    depends_on:
+      - chroma
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: ["sh", "-c", "tail -f /dev/null"]
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    
+  chroma-http-proxy:
+    build:
+      context: '.'
+      dockerfile: docker/http-proxy.Dockerfile
+    container_name: chroma-http-proxy
+    ports:
+      - "10550:10550"
+    environment:
+      - CHROMA_MCP_HOST=chroma-mcp
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=10550
+    networks:
+      - chroma-network
+    depends_on:
+      chroma-mcp:
+        condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10550/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+networks:
+  chroma-network:
+    driver: bridge
+
+volumes:
+  memory_chroma_data:
+    external: true
+  chroma_chroma-data:
+    external: true
+
+

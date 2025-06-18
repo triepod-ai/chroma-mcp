@@ -1,0 +1,57 @@
+services:
+  chroma:
+    image: chromadb/chroma:1.0.3
+    container_name: chroma-chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_chroma-data:/chroma/chroma_data
+    networks:
+      - vector-db-network
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+      - IS_PERSISTENT=TRUE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  chroma-mcp:
+    build:
+      context: '.'
+    container_name: chroma-mcp
+    volumes:
+      - memory_chroma_data:/app/src
+      - ./logs:/app/logs
+    environment:
+      - CHROMA_HOST=chroma-chroma
+      - CHROMA_PORT=8000
+      - CHROMA_CLIENT_TYPE=http
+      - TQDM_DISABLE=1
+    networks:
+      - ai-services-network
+      - vector-db-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: ["chroma-mcp", "--client-type=http", "--host=chroma-chroma", "--port=8000"]
+    depends_on:
+      - chroma
+
+networks:
+  vector-db-network:
+    driver: bridge
+  ai-services-network:
+    driver: bridge
+
+volumes:
+  memory_chroma_data:
+    external: true
+  chroma_chroma-data:
+    external: true
+EOF < /dev/null

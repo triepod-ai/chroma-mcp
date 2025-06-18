@@ -1,5 +1,12 @@
-# This file can be empty 
+# Export server and client functionality
 
 from .server import main
+from .client import ChromaMCP
 
-__all__ = ["main"]
+# Make http_server module available
+try:
+    from . import http_server
+except ImportError:
+    pass
+
+__all__ = ["main", "ChromaMCP", "http_server"]

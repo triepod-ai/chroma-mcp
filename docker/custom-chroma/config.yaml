@@ -1,0 +1,12 @@
+server:
+  host: 0.0.0.0
+  port: 8000
+  cors_allow_origins:
+    - "*"
+  authentication:
+    enabled: false
+
+chroma:
+  persist_directory: /data
+  anonymized_telemetry: false
+  allow_reset: true

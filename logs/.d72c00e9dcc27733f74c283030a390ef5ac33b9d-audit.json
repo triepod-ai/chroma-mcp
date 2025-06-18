@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/mnt/l/ToolNexusMCP_plugins/chroma-mcp/logs/.d72c00e9dcc27733f74c283030a390ef5ac33b9d-audit.json",
+    "files": [
+        {
+            "date": 1746407798705,
+            "name": "/mnt/l/ToolNexusMCP_plugins/chroma-mcp/logs/mcp-puppeteer-2025-05-04.log",
+            "hash": "f6a5473f535a1d67050e868bad10cdeae2abdeecf34d1ef8f8417eb7f8ff28d9"
+        }
+    ],
+    "hashType": "sha256"
+}

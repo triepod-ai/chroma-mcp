@@ -1,0 +1,99 @@
+services:
+  # Existing ChromaDB service
+  chroma:
+    image: chromadb/chroma:1.0.3
+    container_name: chroma-chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_chroma-data:/chroma/chroma_data
+      - chroma_chroma-data:/data
+    networks:
+      - chroma-network
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+      - IS_PERSISTENT=TRUE
+    restart: unless-stopped
+
+  # Existing MCP server (for local wrapper script)
+  chroma-mcp:
+    build:
+      context: '.'
+    container_name: chroma-mcp
+    volumes:
+      - ./logs:/app/logs
+      - memory_chroma_data:/chroma-data
+    environment:
+      - CHROMA_CLIENT_TYPE=http
+      - CHROMA_HOST=chroma-chroma
+      - CHROMA_PORT=8000
+      - CHROMA_SSL=false
+      - TQDM_DISABLE=1
+    networks:
+      - chroma-network
+    depends_on:
+      - chroma
+    command: ["sh", "-c", "tail -f /dev/null"]
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # NEW: SSE Server with SSL termination
+  chroma-sse:
+    build:
+      context: '.'
+      dockerfile: docker/sse-simple.Dockerfile
+    container_name: chroma-sse
+    ports:
+      - "80:80"     # HTTP (redirects to HTTPS)
+      - "443:443"   # HTTPS with SSL
+      - "3633:3633" # Direct SSE access (optional)
+    volumes:
+      - ./logs:/app/logs
+      - chroma_ssl_certs:/etc/letsencrypt  # SSL certificate storage
+      - ./docker/nginx-sse.conf.template:/etc/nginx/nginx.conf.template:ro
+    environment:
+      # Domain configuration
+      - DOMAIN=bot.triepod.ai
+      - SSL_EMAIL=admin@triepod.ai
+      
+      # Service configuration
+      - HTTP_PORT=3633
+      - HTTPS_PORT=443
+      
+      # ChromaDB connection
+      - CHROMA_HOST=chroma-chroma
+      - CHROMA_PORT=8000
+      - CHROMA_CLIENT_TYPE=http
+      - CHROMA_SSL=false
+      
+      # MCP settings
+      - PYTHONUNBUFFERED=1
+      - TQDM_DISABLE=1
+      - ANONYMIZED_TELEMETRY=false
+      - CHROMA_TELEMETRY_DISABLED=true
+    networks:
+      - chroma-network
+    depends_on:
+      - chroma
+      - chroma-mcp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3633/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  chroma-network:
+    driver: bridge
+
+volumes:
+  memory_chroma_data:
+    external: true
+  chroma_chroma-data:
+    external: true
+  chroma_ssl_certs:
+    driver: local

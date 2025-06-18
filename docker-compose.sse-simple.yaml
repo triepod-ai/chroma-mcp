@@ -1,0 +1,67 @@
+services:
+  # Existing ChromaDB service
+  chroma:
+    image: chromadb/chroma:1.0.3
+    container_name: chroma-chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_chroma-data:/chroma/chroma_data
+      - chroma_chroma-data:/data
+    networks:
+      - chroma-network
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+      - IS_PERSISTENT=TRUE
+    restart: unless-stopped
+
+  # Existing MCP server (for local wrapper script)
+  chroma-mcp:
+    build:
+      context: '.'
+    container_name: chroma-mcp
+    volumes:
+      - ./logs:/app/logs
+      - memory_chroma_data:/chroma-data
+    environment:
+      - CHROMA_CLIENT_TYPE=http
+      - CHROMA_HOST=chroma-chroma
+      - CHROMA_PORT=8000
+      - CHROMA_SSL=false
+      - TQDM_DISABLE=1
+    networks:
+      - chroma-network
+    depends_on:
+      - chroma
+    command: ["sh", "-c", "tail -f /dev/null"]
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # Simple SSE Proxy using host mcp-proxy
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: chroma-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx-simple.conf:/etc/nginx/nginx.conf:ro
+      - chroma_ssl_certs:/etc/letsencrypt
+    restart: unless-stopped
+    depends_on:
+      - chroma
+      - chroma-mcp
+
+networks:
+  chroma-network:
+    driver: bridge
+
+volumes:
+  memory_chroma_data:
+    external: true
+  chroma_chroma-data:
+    external: true
+  chroma_ssl_certs:
+    driver: local

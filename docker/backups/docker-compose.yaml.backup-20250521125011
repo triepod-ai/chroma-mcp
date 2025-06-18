@@ -1,0 +1,168 @@
+services:
+  chroma:
+    image: chromadb/chroma:1.0.3
+   # build:
+    #  context: ./custom-chroma
+    container_name: chroma-chroma
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_chroma-data:/data
+      - ./custom-chroma/config.yaml:/config.yaml
+    networks:
+      - vector-db-network
+    environment:
+      - ALLOW_RESET=true
+      - ANONYMIZED_TELEMETRY=false
+      - IS_PERSISTENT=TRUE
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://chroma-chroma:8000/api/v1/heartbeat"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  chroma-mcp:
+    build:
+      context: '.'  # Using relative path since we're already in the directory
+    container_name: chroma-mcp
+    volumes:
+      - memory_chroma_data:/app/src  # Using memory_chroma_data (167.9KB) instead of the smaller one
+      - ./logs:/app/logs  # Mount a logs directory for log files
+    environment:
+      - CHROMA_URI=http://chroma-chroma:8000
+#      - CHROMA_CLIENT_TYPE=http  # Add this line
+      - TQDM_DISABLE=1  # Disable tqdm progress bars that interfere with JSON-RPC
+      - client-type=http
+      - host=chroma-chroma
+      - port=8000
+    networks:
+      - ai-services-network
+      - vector-db-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+    command: ["chroma-mcp"]
+    
+  chroma-http-proxy:
+    build:
+      context: '.'
+      dockerfile: http-proxy.Dockerfile
+    container_name: chroma-http-proxy
+    ports:
+      - "10550:10550"
+    environment:
+      - CHROMA_MCP_HOST=chroma-mcp
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=10550
+      - PROXY_TYPE=direct  # Options: websocket, functional, direct, or simple
+      - MCP_EXECUTABLE=mcp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Required for websocket proxy
+    networks:
+      - ai-services-network
+    depends_on:
+      - chroma-mcp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+##
+##usage: chroma-mcp [-h] [--client-type {http,cloud,persistent,ephemeral}]
+##                  [--data-dir DATA_DIR] [--host HOST] [--port PORT]
+##                  [--custom-auth-credentials CUSTOM_AUTH_CREDENTIALS]
+##                  [--tenant TENANT] [--database DATABASE] [--api-key API_KEY]
+##                  [--ssl SSL] [--dotenv-path DOTENV_PATH]
+  redis:
+    image: redis:alpine
+    container_name: chroma-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - memory_redis_data:/data  # This is correct (88B)
+    networks:
+      - cache-network
+    restart: unless-stopped     
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Neo4j database for graph storage
+  neo4j:
+    image: neo4j:4.4
+    container_name: chroma-neo4j
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_dbms_memory_heap_max__size=2G
+      - NEO4J_dbms_memory_pagecache_size=1G
+    volumes:
+      - memory_neo4j_data:/data  
+      - memory_neo4j_logs:/logs  # This is correct (912.5KB)
+    networks:
+      - db-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:7474"]
+      interval: 10s
+      timeout: 20s
+      retries: 5
+      start_period: 60s
+
+  filesystem-api:
+    build:
+      context: "."
+      dockerfile: filesystem.Dockerfile
+    container_name: chroma-filesystem-api
+    ports:
+      - "8080:8080"
+    networks:
+      - ai-services-network
+    restart: unless-stopped
+    volumes:
+      # Mount specific allowed directories from C drive
+      - /mnt/c/Users/bthom:/app/users                  # Mounts C:\Users -> /app/users
+      - /mnt/c/Users/bthom/apps:/app/users/apps
+      - /mnt/c/Users/bthom/scripts:/app/users/scripts
+      - /mnt/c/triepod.ai:/app/triepod.ai        # Mounts C:\triepod.ai -> /app/triepod.ai
+      - /mnt/c/LodestarAI:/app/LodestarAI        # Mounts C:\LodestarAI -> /app/LodestarAI
+      # Mount entire L drive (covers all L:\ allowed paths)
+      - /mnt/l:/app/l_drive                      # Mounts L:\ -> /app/l_drive
+    environment:
+      # Update allowed directories inside the container, separated by commas
+      - ALLOWED_DIRECTORIES=/app/users,/app/triepod.ai,/app/LodestarAI,/app/l_drive
+
+networks:
+  vector-db-network:
+    driver: bridge
+  db-network:
+    driver: bridge
+  cache-network:
+    driver: bridge
+  ai-services-network:
+    driver: bridge
+
+volumes:
+  memory_chroma_data:
+    external: true
+  memory_redis_data:
+    external: true
+  memory_neo4j_data:
+    external: true
+  memory_neo4j_logs:
+    external: true
+  chroma_chroma-data:
+    external: true
+
+

@@ -1,0 +1,30 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "l:\\ToolNexusMCP_plugins\\chroma-mcp\\logs\\.bedaeec8505affaa2b6cb44534ca222f1d788b8c-audit.json",
+    "files": [
+        {
+            "date": 1747945744220,
+            "name": "l:\\ToolNexusMCP_plugins\\chroma-mcp\\logs\\mcp-puppeteer-2025-05-22.log",
+            "hash": "ef7eb1f31491b1d7c2c27d60a8c49ed80e089c85fc666c9eb420e0eff368427a"
+        },
+        {
+            "date": 1748525307844,
+            "name": "l:\\ToolNexusMCP_plugins\\chroma-mcp\\logs\\mcp-puppeteer-2025-05-29.log",
+            "hash": "28bdb186b23025b7135a171878974c5d97597cb3aee8b0c75e29b0722eabc1b8"
+        },
+        {
+            "date": 1748658207530,
+            "name": "l:\\ToolNexusMCP_plugins\\chroma-mcp\\logs\\mcp-puppeteer-2025-05-30.log",
+            "hash": "fecb6cee7676bfd6136b5f36b1b978a21347f840f1f393c4db2382cac8abcaf5"
+        },
+        {
+            "date": 1748792602564,
+            "name": "l:\\ToolNexusMCP_plugins\\chroma-mcp\\logs\\mcp-puppeteer-2025-06-01.log",
+            "hash": "1f0211c96927788b6387efb631bbe1b4bc82f8042b1ad05f9f2d893053137eab"
+        }
+    ],
+    "hashType": "sha256"
+}

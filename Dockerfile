@@ -15,7 +15,7 @@ RUN python -m pip install --upgrade pip && \
     pip install .
 
 # Expose any necessary ports if needed (e.g., 8080)
-EXPOSE 8080
+EXPOSE 10550
 
 # Command to run MCP server
 CMD ["chroma-mcp"]
