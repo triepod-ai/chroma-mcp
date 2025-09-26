@@ -438,6 +438,26 @@ async def chroma_modify_collection(
         raise Exception(f"Failed to modify collection '{collection_name}': {str(e)}") from e
 
 @mcp.tool()
+async def chroma_fork_collection(
+    collection_name: str,
+    new_collection_name: str,
+) -> str:
+    """Fork a Chroma collection.
+
+    Args:
+        collection_name: Name of the collection to fork
+        new_collection_name: Name of the new collection to create
+        metadata: Optional metadata dict to add to the new collection
+    """
+    client = get_chroma_client()
+    try:
+        collection = client.get_collection(collection_name)
+        collection.fork(new_collection_name)
+        return f"Successfully forked collection {collection_name} to {new_collection_name}"
+    except Exception as e:
+        raise Exception(f"Failed to fork collection '{collection_name}': {str(e)}") from e
+
+@mcp.tool()
 async def chroma_delete_collection(collection_name: str) -> str:
     """Delete a Chroma collection.
     
@@ -510,6 +530,13 @@ async def chroma_query_documents(
                - Logical AND: {"$and": [{"field1": {"$eq": "value1"}}, {"field2": {"$gt": 5}}]}
                - Logical OR: {"$or": [{"field1": {"$eq": "value1"}}, {"field1": {"$eq": "value2"}}]}
         where_document: Optional document content filters
+               Examples:
+               - Contains: {"$contains": "value"}
+               - Not contains: {"$not_contains": "value"}
+               - Regex: {"$regex": "[a-z]+"}
+               - Not regex: {"$not_regex": "[a-z]+"}
+               - Logical AND: {"$and": [{"$contains": "value1"}, {"$not_regex": "[a-z]+"}]}
+               - Logical OR: {"$or": [{"$regex": "[a-z]+"}, {"$not_contains": "value2"}]}
         include: List of what to include in response. By default, this will include documents, metadatas, and distances.
     """
     if not query_texts:
@@ -550,6 +577,13 @@ async def chroma_get_documents(
                - Logical AND: {"$and": [{"field1": {"$eq": "value1"}}, {"field2": {"$gt": 5}}]}
                - Logical OR: {"$or": [{"field1": {"$eq": "value1"}}, {"field1": {"$eq": "value2"}}]}
         where_document: Optional document content filters
+               Examples:
+               - Contains: {"$contains": "value"}
+               - Not contains: {"$not_contains": "value"}
+               - Regex: {"$regex": "[a-z]+"}
+               - Not regex: {"$not_regex": "[a-z]+"}
+               - Logical AND: {"$and": [{"$contains": "value1"}, {"$not_regex": "[a-z]+"}]}
+               - Logical OR: {"$or": [{"$regex": "[a-z]+"}, {"$not_contains": "value2"}]}
         include: List of what to include in response. By default, this will include documents, and metadatas.
         limit: Optional maximum number of documents to return
         offset: Optional number of documents to skip before returning results

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 09/26/2025
+
+### Added
+
+- Add new `chroma_fork_collection` tool support for copying collections
+- Enhanced document query filters with regex support
+- Updated tool prompts with regex examples for better documentation
+
+### Enhanced
+
+- Extended `where_document` filtering with regex patterns ($regex, $not_regex)
+- Improved query documentation with comprehensive filtering examples
+
 ## [0.2.2] - 04/08/2025
 
 ### Changed

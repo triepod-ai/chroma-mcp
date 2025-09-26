@@ -1,0 +1,178 @@
+# Multi-Aider Sub-Agent Debug Report
+
+**Report Date:** June 21, 2025  
+**Tested Component:** `taskmanager-mcp:multi_aider_sub_agent`  
+**Test Environment:** MCP Task Manager with Claude Sonnet 4  
+**Reporter:** Claude Assistant  
+
+## Executive Summary
+
+Testing of the `multi_aider_sub_agent` function revealed critical issues with task parsing logic that significantly impacts the tool's effectiveness for complex coding projects. While the function executes successfully, it demonstrates poor natural language understanding and inappropriate task decomposition.
+
+## Test Setup
+
+### Test Scenario
+- **Original Request:** "Create a simple Python calculator module with basic arithmetic operations and unit tests"
+- **Task Input:** Complex multi-paragraph description of a cohesive coding project
+- **Expected Behavior:** Intelligent breakdown into 4 logical development phases
+- **Environment:** WSL environment with taskmanager-mcp integration
+
+### Input Task Description
+```
+Create a complete Python calculator project with the following components:
+
+1. Core calculator module (calculator.py) with functions for add, subtract, multiply, and divide operations
+2. Add proper input validation and error handling to prevent division by zero and handle invalid inputs
+3. Create comprehensive unit tests (test_calculator.py) using pytest framework to test all functions including edge cases
+4. Add complete documentation with docstrings for all functions and clear comments explaining the code
+
+The tasks should be completed in logical order: first the core module, then validation, then tests, and finally documentation. Create all files in a calculator project structure.
+```
+
+## Observed Behavior vs Expected Behavior
+
+### What Happened ❌
+- Function split input into **13 separate sub-tasks** based on punctuation/line breaks
+- Tasks became fragmented, nonsensical units like:
+  - "Task 2: 1"
+  - "Task 3: Core calculator module (calculator"
+  - "Task 4: py) with functions for add, subtract, multiply, and divide operations"
+- Lost semantic meaning and project context
+- 12/13 tasks marked as "successful" despite meaningless decomposition
+- 1 task skipped due to "Dependencies not satisfied"
+
+### What Should Have Happened ✅
+- Parse the description to identify **4 logical phases**:
+  1. Core module development
+  2. Input validation implementation
+  3. Unit test creation
+  4. Documentation addition
+- Maintain semantic understanding of project structure
+- Execute tasks in dependency order
+- Preserve context between related tasks
+
+## Technical Analysis
+
+### Root Cause: Poor Natural Language Processing
+```python
+# Suspected current implementation (pseudocode)
+def parse_tasks(description):
+    # Problematic: Split by punctuation/newlines
+    tasks = description.split('\n') + description.split('.')
+    return [task.strip() for task in tasks if task.strip()]
+```
+
+### Missing Components
+1. **Semantic Understanding**: No recognition of numbered lists, bullet points, or logical structure
+2. **Context Preservation**: Each task treated independently without project context
+3. **Dependency Analysis**: No understanding of task ordering requirements
+4. **Validation Logic**: No verification that parsed tasks make sense
+
+## Impact Assessment
+
+### Severity: HIGH 🔴
+- **Functionality:** Tool produces unusable task breakdowns
+- **User Experience:** Confusing output undermines confidence
+- **Development Workflow:** Cannot be relied upon for real coding projects
+- **Resource Waste:** Creates more overhead than value
+
+### Affected Use Cases
+- Multi-file coding projects
+- Sequential development tasks
+- Complex technical implementations
+- Any task requiring logical decomposition
+
+## Recommended Solutions
+
+### 1. Implement Intelligent Task Parsing
+```python
+def improved_parse_tasks(description):
+    # Use NLP to identify:
+    # - Numbered/bulleted lists
+    # - Sequential indicators ("first", "then", "finally")
+    # - File/component references
+    # - Dependency relationships
+    
+    tasks = extract_logical_components(description)
+    tasks = order_by_dependencies(tasks)
+    return validate_task_coherence(tasks)
+```
+
+### 2. Add Context Preservation
+- Maintain project-level context across all sub-tasks
+- Include file structure and relationship information
+- Preserve original intent and goals
+
+### 3. Implement Validation Logic
+- Verify that parsed tasks form a coherent workflow
+- Check for missing dependencies
+- Validate that tasks can actually be executed
+
+### 4. Enhanced Error Handling
+- Detect when parsing fails to create meaningful tasks
+- Provide fallback to simpler decomposition
+- Allow manual override of automatic parsing
+
+## Immediate Action Items
+
+### Priority 1: Critical Fixes
+- [ ] Replace simple text splitting with NLP-based parsing
+- [ ] Add task coherence validation
+- [ ] Implement dependency detection
+
+### Priority 2: Enhanced Features
+- [ ] Add context preservation between tasks
+- [ ] Implement intelligent ordering algorithms
+- [ ] Create validation feedback loops
+
+### Priority 3: User Experience
+- [ ] Add preview mode for task decomposition
+- [ ] Provide manual editing capabilities
+- [ ] Improve error messages and recovery
+
+## Test Data for Validation
+
+### Simple Test Case
+```
+Input: "Create a hello world app with tests"
+Expected: 2 tasks (app creation, test creation)
+```
+
+### Complex Test Case
+```
+Input: [Original calculator project description]
+Expected: 4 logical tasks in proper sequence
+```
+
+### Edge Cases
+- Single sentence descriptions
+- Tasks with no clear decomposition
+- Circular dependencies
+- Invalid or incomplete specifications
+
+## Monitoring and Metrics
+
+### Success Criteria
+- **Parsing Accuracy:** 95%+ of tasks should be semantically coherent
+- **Dependency Detection:** 90%+ of task sequences should be logically ordered
+- **User Satisfaction:** Reduction in manual task editing by 80%
+
+### Key Metrics to Track
+- Task coherence score
+- User acceptance rate of generated breakdowns
+- Time saved vs. manual task creation
+- Error rate in task execution
+
+## Conclusion
+
+The `multi_aider_sub_agent` function has significant potential but requires substantial improvements to its core parsing logic. The current implementation is not production-ready for complex coding projects. Immediate attention to NLP-based parsing and context preservation is essential for tool viability.
+
+**Recommendation:** Prioritize the critical fixes before expanding functionality or promoting the tool for broader use.
+
+---
+
+**Next Steps:** 
+1. Review this report with the development team
+2. Implement Priority 1 fixes
+3. Re-test with original test cases
+4. Conduct broader testing with diverse task types
