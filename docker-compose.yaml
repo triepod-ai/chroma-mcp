@@ -1,6 +1,6 @@
 services:
   chroma:
-    image: chromadb/chroma:1.0.3
+    image: chromadb/chroma:1.1.0
     container_name: chroma-chroma
     ports:
       - "8001:8000"
@@ -53,34 +53,34 @@ services:
           memory: 1G
         reservations:
           memory: 256M
-    
-  chroma-http-proxy:
+
+  chroma-streamable-http:
     build:
       context: '.'
-      dockerfile: docker/http-proxy.Dockerfile
-    container_name: chroma-http-proxy
+    container_name: chroma-streamable-http
     ports:
       - "10550:10550"
     environment:
-      - CHROMA_MCP_HOST=chroma-mcp
-      - HTTP_HOST=0.0.0.0
-      - HTTP_PORT=10550
+      - CHROMA_CLIENT_TYPE=http
+      - CHROMA_HOST=chroma-chroma
+      - CHROMA_PORT=8000
+      - CHROMA_SSL=false
+      - PYTHONUNBUFFERED=1
+      - TQDM_DISABLE=1
+      - ANONYMIZED_TELEMETRY=false
+      - CHROMA_TELEMETRY_DISABLED=true
     networks:
       - chroma-network
     depends_on:
-      chroma-mcp:
-        condition: service_started
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - chroma
+      - chroma-mcp
+    command: ["python3", "-c", "from chroma_mcp.streamable_http_server import run_server; run_server('0.0.0.0', 10550)"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10550/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
     restart: unless-stopped
     deploy:
       resources:

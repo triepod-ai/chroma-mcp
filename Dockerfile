@@ -14,6 +14,9 @@ COPY . /app
 RUN python -m pip install --upgrade pip && \
     pip install .
 
+# Set PYTHONPATH to prioritize local source over installed package
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
+
 # Expose any necessary ports if needed (e.g., 8080)
 EXPOSE 10550
 
