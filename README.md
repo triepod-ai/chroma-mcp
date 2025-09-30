@@ -24,11 +24,21 @@
 
 # Chroma MCP Server
 
+> **Note**: This is an enhanced fork of the original [chroma-core/chroma-mcp](https://github.com/chroma-core/chroma-mcp) project, featuring FastMCP architecture, streamable HTTP transport, and additional enhancements for production use.
+
 [![smithery badge](https://smithery.ai/badge/@chroma-core/chroma-mcp)](https://smithery.ai/server/@chroma-core/chroma-mcp)
 
 [The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol designed for effortless integration between LLM applications and external data sources or tools, offering a standardized framework to seamlessly provide LLMs with the context they require.
 
 This server provides data retrieval capabilities powered by Chroma, enabling AI models to create collections over generated data and user inputs, and retrieve that data using vector search, full text search, metadata filtering, and more.
+
+## Enhancements in This Fork
+
+- **FastMCP Architecture**: Modernized codebase following FastMCP template patterns
+- **Streamable HTTP Transport**: MCP-compliant HTTP server implementation (port 10550)
+- **Improved Type Safety**: Full Pydantic validation and structured error handling
+- **Docker-First Deployment**: Production-ready containerized setup
+- **Enhanced Documentation**: Comprehensive guides for development and deployment
 
 ## Features
 
