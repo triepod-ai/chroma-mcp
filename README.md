@@ -28,6 +28,28 @@
 
 [![smithery badge](https://smithery.ai/badge/@chroma-core/chroma-mcp)](https://smithery.ai/server/@chroma-core/chroma-mcp)
 
+## MCP SDK Version
+
+**Current Version**: Python MCP SDK 1.15.0 (upgraded October 1, 2025)
+
+This server uses the latest Model Context Protocol SDK with enhanced capabilities:
+
+### New Features:
+- **Paginated List Decorators**: Support for paginated prompts, resources, and tools
+- **Protected Resource Metadata**: Improved metadata handling for resources
+- **Enhanced Security**: HTTP 403 responses for invalid Origin headers
+- **Default Values**: Elicitation schema support for default values
+- **Extended Metadata**: Additional metadata and icon support in SDK
+
+**Previous Version**: 1.2.1 → **Upgrade Jump**: 13+ major versions (significant protocol enhancements)
+
+**Compatibility**: The upgrade maintains full backward compatibility while enabling new optional features when MCP clients support them. All existing tool definitions and workflows continue to work unchanged.
+
+### Installation Notes:
+All 123 packages installed successfully in a fresh `uv` virtual environment. Server tested and operational with the `chroma-mcp` entry point.
+
+For complete MCP protocol documentation, see [Model Context Protocol](https://modelcontextprotocol.io/).
+
 [The Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol designed for effortless integration between LLM applications and external data sources or tools, offering a standardized framework to seamlessly provide LLMs with the context they require.
 
 This server provides data retrieval capabilities powered by Chroma, enabling AI models to create collections over generated data and user inputs, and retrieve that data using vector search, full text search, metadata filtering, and more.
