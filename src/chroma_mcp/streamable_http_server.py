@@ -1,6 +1,32 @@
 """
 MCP-compliant Streamable HTTP Server for Chroma MCP
 Implements the Model Context Protocol Streamable HTTP transport specification
+
+⚠️  DEPRECATED: This custom implementation is deprecated as of 2025-10-03
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MIGRATION NOTICE:
+This file is deprecated in favor of FastMCP's built-in streamable HTTP transport.
+
+REASON FOR DEPRECATION:
+- Custom implementation used placeholder tool schemas with empty properties
+- MCP Inspector rejected tools without proper parameter definitions
+- FastMCP automatically generates complete schemas from Pydantic annotations
+
+NEW IMPLEMENTATION:
+Use server.py with --transport flag:
+    python3 -m chroma_mcp.server --transport streamable-http \
+                                  --http-host 0.0.0.0 \
+                                  --http-port 10550
+
+See src/chroma_mcp/server.py:1196-1264 for the new implementation.
+
+DOCKER USAGE:
+The docker-compose.yaml has been updated to use the new implementation.
+See docker-compose.yaml:80 for the updated command.
+
+This file is retained for reference but should not be used in production.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 
 import os
@@ -39,6 +65,11 @@ from chroma_mcp.server_original import (
 )
 
 # Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 logger = logging.getLogger(__name__)
 
 # Session storage for streamable HTTP
@@ -166,6 +197,7 @@ def create_app() -> FastAPI:
         try:
             # Parse JSON-RPC request
             body = await request.json()
+            logger.info(f"POST request body: {body}")
 
             # Handle single request or batch
             if isinstance(body, list):
@@ -187,13 +219,13 @@ def create_app() -> FastAPI:
             return JsonRpcResponse(
                 error={"code": -32700, "message": "Parse error"},
                 id=None
-            ).dict()
+            ).dict(exclude_none=True)
         except Exception as e:
             logger.error(f"Error in POST request: {str(e)}")
             return JsonRpcResponse(
                 error={"code": -32603, "message": f"Internal error: {str(e)}"},
                 id=None
-            ).dict()
+            ).dict(exclude_none=True)
 
     async def process_jsonrpc_request(
         body: Dict[str, Any],
@@ -206,12 +238,15 @@ def create_app() -> FastAPI:
         params = body.get("params", {})
         req_id = body.get("id")
 
+        # Log the request for debugging
+        logger.info(f"MCP Request: method={method}, id={req_id}, session={session_id}")
+
         # Validate JSON-RPC version
         if jsonrpc != "2.0":
             return JsonRpcResponse(
                 error={"code": -32600, "message": "Invalid Request"},
                 id=req_id
-            ).dict()
+            ).dict(exclude_none=True)
 
         # Handle MCP protocol methods
         if method == "initialize":
@@ -227,7 +262,7 @@ def create_app() -> FastAPI:
             return JsonRpcResponse(
                 error={"code": -32601, "message": f"Method not found: {method}"},
                 id=req_id
-            ).dict()
+            ).dict(exclude_none=True)
 
     async def handle_initialize(
         params: Dict[str, Any],
@@ -248,7 +283,7 @@ def create_app() -> FastAPI:
         return JsonRpcResponse(
             result=SERVER_INFO,
             id=req_id
-        ).dict()
+        ).dict(exclude_none=True)
 
     async def handle_tools_list(req_id: Union[str, int, None]) -> Dict[str, Any]:
         """Handle tools/list request."""
@@ -268,7 +303,7 @@ def create_app() -> FastAPI:
         return JsonRpcResponse(
             result={"tools": tools},
             id=req_id
-        ).dict()
+        ).dict(exclude_none=True)
 
     async def handle_tool_call(
         params: Dict[str, Any],
@@ -282,7 +317,7 @@ def create_app() -> FastAPI:
             return JsonRpcResponse(
                 error={"code": -32601, "message": f"Tool not found: {tool_name}"},
                 id=req_id
-            ).dict()
+            ).dict(exclude_none=True)
 
         try:
             # Execute the tool
@@ -299,20 +334,21 @@ def create_app() -> FastAPI:
                     ]
                 },
                 id=req_id
-            ).dict()
+            ).dict(exclude_none=True)
 
         except Exception as e:
             logger.error(f"Tool execution error for {tool_name}: {str(e)}")
             return JsonRpcResponse(
                 error={"code": -32603, "message": f"Tool execution failed: {str(e)}"},
                 id=req_id
-            ).dict()
+            ).dict(exclude_none=True)
 
     @app.get("/")
     async def handle_get_request(
         mcp_session_id: Optional[str] = Header(None, alias="Mcp-Session-Id")
     ):
         """Handle GET requests (server-to-client SSE stream) in MCP Streamable HTTP."""
+        logger.info(f"GET/SSE request - session_id: {mcp_session_id}")
         async def event_stream():
             """Generate Server-Sent Events stream."""
             try:
@@ -361,7 +397,23 @@ def create_app() -> FastAPI:
     return app
 
 def run_server(host: str = "127.0.0.1", port: int = 3000):
-    """Run the MCP Streamable HTTP server."""
+    """
+    Run the MCP Streamable HTTP server.
+
+    ⚠️  DEPRECATED: Use server.py with --transport streamable-http instead.
+
+    This function is deprecated. Please use:
+        python3 -m chroma_mcp.server --transport streamable-http --http-host <host> --http-port <port>
+
+    See file docstring for full deprecation details.
+    """
+    logger.warning("=" * 80)
+    logger.warning("⚠️  DEPRECATION WARNING")
+    logger.warning("This custom streamable HTTP server is deprecated.")
+    logger.warning("Please use: python3 -m chroma_mcp.server --transport streamable-http")
+    logger.warning("See file docstring for migration details.")
+    logger.warning("=" * 80)
+
     # Initialize Chroma client
     get_chroma_client()
 
