@@ -1,7 +1,7 @@
 # Project Status: chroma-mcp
 
-**Last Updated**: 2025-06-18 14:45:00  
-**Project Type**: Python Package (MCP Server) - Windows to WSL Migration  
+**Last Updated**: 2025-10-03 (Runtime Warning Fix)
+**Project Type**: Python Package (MCP Server) - Windows to WSL Migration
 **Location**: `/home/bryan/mcp-servers/chroma-mcp`
 
 ---
@@ -28,6 +28,7 @@
 - [ ] Documentation updates for WSL deployment
 
 ### Recently Completed ✅
+- [x] Python RuntimeWarning fix (module execution pattern - 2025-10-03)
 - [x] HTTP proxy deprecation (legacy code removed - 2025-09-26)
 - [x] FastMCP migration cleanup (proxy services no longer needed)
 - [x] Streamable HTTP configured for port 10550 (2025-09-26)
@@ -150,6 +151,7 @@ Successfully migrated Chroma MCP Server from Windows to WSL2. Docker containers 
 
 | Date | Changes | Updated By |
 |------|---------|------------|
+| 2025-10-03 | Python RuntimeWarning fix - __main__.py pattern implementation | Claude Code |
 | 2025-06-18 14:45:00 | WSL migration status - permissions fixed, containers operational | Claude Code |
 
 ---
@@ -266,3 +268,38 @@ Successfully migrated Chroma MCP Server from Windows to WSL2. Docker containers 
 
 ## Session Export - 2025-09-26 14:00:00
 **Docker Streamable HTTP Implementation & Cleanup**: Successfully implemented MCP-compliant streamable HTTP server in Docker container on port 10550. Deprecated legacy chroma-http-proxy and resolved container startup issues through systematic debugging. Added FastAPI/uvicorn dependencies, fixed import paths, and validated full MCP functionality. Cleaned up development containers (wizardly_jang, jolly_sanderson) leaving clean production stack. HTTP interface now provides JSON-RPC access to all 17 MCP tools with proper health checks and stability.
+
+## Session Export - 2025-10-03
+
+### Python RuntimeWarning Resolution
+
+**Issue Resolved**: Fixed Python RuntimeWarning that occurred during MCP server startup due to improper module execution pattern.
+
+**Problem Analysis:**
+- Running `python -m chroma_mcp.server` caused RuntimeWarning: "'chroma_mcp.server' found in sys.modules after import of package 'chroma_mcp', but prior to execution"
+- Root cause: `__init__.py` imported `main` from `.server`, causing module to load before execution
+- Warning indicated potential unpredictable behavior in module initialization
+
+**Solution Implemented:**
+- ✅ **Created `__main__.py`**: Added proper entry point at `/home/bryan/mcp-servers/chroma-mcp/src/chroma_mcp/__main__.py`
+  - Follows Python best practices for executable packages
+  - Cleanly separates package initialization from module execution
+- ✅ **Updated Wrapper Script**: Modified `/home/bryan/run-chroma-mcp.sh` to use `python -m chroma_mcp` instead of `python -m chroma_mcp.server`
+  - Proper module execution pattern
+  - Eliminates circular import issues
+- ✅ **Container Rebuild**: Rebuilt Docker container to include new `__main__.py` file
+- ✅ **Validation**: Confirmed MCP server responds without warnings
+
+**Technical Details:**
+- **File Created**: `src/chroma_mcp/__main__.py` (10 lines)
+- **Pattern**: Implements standard Python package execution entry point
+- **Compatibility**: Maintains backward compatibility with existing console script entry point
+- **Testing**: Verified with MCP ping request returning clean JSON-RPC response
+
+**Results:**
+- **Status**: ✅ RuntimeWarning completely eliminated
+- **Server Health**: Clean startup with no warnings or errors
+- **MCP Protocol**: Functioning correctly via wrapper script
+- **Code Quality**: Now follows Python best practices for package execution
+
+**Session Impact**: Resolved production warning, improved code quality, and aligned with Python packaging standards. The MCP server now starts cleanly without any runtime warnings.
