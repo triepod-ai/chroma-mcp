@@ -1143,6 +1143,21 @@ class ChromaMCPServer(FastMCP):
 def create_parser():
     """Create and return the argument parser."""
     parser = argparse.ArgumentParser(description='FastMCP server for Chroma DB')
+
+    # Transport configuration
+    parser.add_argument('--transport',
+                       choices=['stdio', 'sse', 'streamable-http'],
+                       default=os.getenv('MCP_TRANSPORT', 'stdio'),
+                       help='MCP transport protocol to use (default: stdio)')
+    parser.add_argument('--http-host',
+                       default=os.getenv('MCP_HTTP_HOST', '127.0.0.1'),
+                       help='Host for HTTP/SSE transport (default: 127.0.0.1)')
+    parser.add_argument('--http-port',
+                       type=int,
+                       default=int(os.getenv('MCP_HTTP_PORT', '3000')),
+                       help='Port for HTTP/SSE transport (default: 3000)')
+
+    # Chroma client configuration
     parser.add_argument('--client-type',
                        choices=['http', 'cloud', 'persistent', 'ephemeral'],
                        default=os.getenv('CHROMA_CLIENT_TYPE', 'persistent'),
@@ -1208,8 +1223,42 @@ def main():
     try:
         server = ChromaMCPServer(settings)
         logger.info("Successfully initialized ChromaMCPServer")
-        logger.info("Starting MCP server")
-        server.run(transport='stdio')
+        logger.info(f"Starting MCP server with transport: {args.transport}")
+
+        # Handle different transports
+        if args.transport == 'streamable-http':
+            # For streamable HTTP, we need to use uvicorn with custom host/port
+            import uvicorn
+            logger.info(f"Starting streamable HTTP server on {args.http_host}:{args.http_port}")
+
+            # Get the FastAPI app from FastMCP's streamable HTTP implementation
+            app = server.streamable_http_app()
+
+            uvicorn.run(
+                app,
+                host=args.http_host,
+                port=args.http_port,
+                log_level="info"
+            )
+        elif args.transport == 'sse':
+            # For SSE, use uvicorn with custom host/port
+            import uvicorn
+            logger.info(f"Starting SSE server on {args.http_host}:{args.http_port}")
+
+            # Get the FastAPI app from FastMCP's SSE implementation
+            app = server.sse_app()
+
+            uvicorn.run(
+                app,
+                host=args.http_host,
+                port=args.http_port,
+                log_level="info"
+            )
+        else:
+            # Default to stdio transport
+            logger.info("Starting stdio transport")
+            server.run(transport='stdio')
+
     except Exception as e:
         logger.error(f"Failed to initialize or run server: {str(e)}")
         raise

@@ -65,6 +65,9 @@ services:
       - CHROMA_HOST=chroma-chroma
       - CHROMA_PORT=8000
       - CHROMA_SSL=false
+      - MCP_TRANSPORT=streamable-http
+      - MCP_HTTP_HOST=0.0.0.0
+      - MCP_HTTP_PORT=10550
       - PYTHONUNBUFFERED=1
       - TQDM_DISABLE=1
       - ANONYMIZED_TELEMETRY=false
@@ -74,7 +77,7 @@ services:
     depends_on:
       - chroma
       - chroma-mcp
-    command: ["python3", "-c", "from chroma_mcp.streamable_http_server import run_server; run_server('0.0.0.0', 10550)"]
+    command: ["python3", "-m", "chroma_mcp.server", "--transport", "streamable-http", "--http-host", "0.0.0.0", "--http-port", "10550"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10550/health"]
       interval: 30s

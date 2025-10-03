@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "chroma-stdio": {
+      "type": "stdio",
+      "command": "/home/bryan/run-chroma-mcp.sh"
+    },
+    "chroma-http": {
+      "type": "streamableHttp",
+      "url": "http://localhost:10550/mcp"
+    }
+  }
+}
