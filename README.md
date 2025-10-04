@@ -56,10 +56,35 @@ This server provides data retrieval capabilities powered by Chroma, enabling AI 
 
 ## Enhancements in This Fork
 
+> 📋 **Validation**: All claims below are verified with code references and evidence. See [VALIDATION.md](VALIDATION.md) for detailed verification.
+
+### Sequential Thinking Capabilities ⭐
+This fork **restores** the **Sequential Thinking** feature (removed in upstream v0.2.0) and **enhances it** with new capabilities:
+
+**What's New:**
+- **Branching Support**: Explore alternative solution paths from any thought in a session
+- **Revision Tracking**: Revise previous thoughts based on new insights while maintaining history
+- **Session Management**: Track complete thought chains with metadata-based organization
+- **Enhanced Search**: Find similar reasoning sessions using ChromaDB's vector similarity
+
+**Implementation:**
+- Self-contained ChromaDB implementation using dedicated "sequential_thinking" collection
+- Metadata-driven architecture (session_id, thought_number, branch_id, revision flags)
+- No external service dependencies - works with any Chroma deployment
+
+**Use Cases:** Algorithm design, code review, exploratory analysis, complex problem-solving
+
+**Verification:**
+- Code: `src/chroma_mcp/server.py:1054-1119` (5 sequential thinking tools)
+- Tests: `tests/unit/test_sequential_thinking.py`
+- Examples: `examples/sequential_thinking_example.py` (727 lines, 2 complete workflows)
+- Evidence: See [VALIDATION.md](VALIDATION.md) for detailed feature verification
+
+### Infrastructure Enhancements
 - **FastMCP Architecture**: Modernized codebase following FastMCP template patterns
 - **Streamable HTTP Transport**: MCP-compliant HTTP server implementation (port 10550)
 - **Improved Type Safety**: Full Pydantic validation and structured error handling
-- **Docker-First Deployment**: Production-ready containerized setup
+- **Docker-First Deployment**: Production-ready containerized setup with integrated services
 - **Enhanced Documentation**: Comprehensive guides for development and deployment
 
 ## Features
@@ -84,6 +109,13 @@ This server provides data retrieval capabilities powered by Chroma, enabling AI 
   - Retrieve documents by IDs or filters
   - Full text search capabilities
 
+- **Sequential Thinking & Reasoning** ⭐
+  - Multi-step problem solving with structured thought chains
+  - Thought revision and branching for exploring alternative approaches
+  - Session management with complete history tracking via ChromaDB metadata
+  - Find similar reasoning sessions using vector similarity search
+  - Self-contained implementation - no external service dependencies
+
 ### Supported Tools
 
 - `chroma_list_collections` - List all collections with pagination support
@@ -98,6 +130,34 @@ This server provides data retrieval capabilities powered by Chroma, enabling AI 
 - `chroma_get_documents` - Retrieve documents by IDs or filters with pagination
 - `chroma_update_documents` - Update existing documents' content, metadata, or embeddings
 - `chroma_delete_documents` - Delete specific documents from a collection
+
+### Sequential Thinking Tools
+
+> **Note**: These tools enable advanced reasoning capabilities unique to this fork. The Sequential Thinking feature was removed in upstream v0.2.0 but has been restored and enhanced here. See [VALIDATION.md](VALIDATION.md#sequential-thinking-tools-validation) for verification.
+
+- `chroma_sequential_thinking` - Store and process sequential thoughts with support for:
+  - Step-by-step reasoning with thought numbering
+  - Thought revision (revise previous thoughts based on new insights)
+  - Thought branching (explore alternative solution paths)
+  - Session summarization and key thought identification
+- `chroma_get_similar_sessions` - Find related thinking sessions based on:
+  - Content similarity (semantic search across session summaries)
+  - Metadata filters (session type, thought count ranges)
+  - Configurable result limits
+- `chroma_get_thought_history` - Retrieve complete thought chains including:
+  - All thoughts in chronological order
+  - Branch exploration with branch IDs
+  - Revision history tracking
+- `chroma_get_thought_branches` - View branching thought processes:
+  - Identify all branches from a specific thought
+  - Track alternative solution paths
+  - Navigate complex reasoning trees
+- `chroma_continue_thought_chain` - Analyze and continue reasoning:
+  - Analyze last thought in a session
+  - Provide continuation suggestions
+  - Support completion, continuation, and branching analysis types
+
+**Example Use Cases**: See `examples/sequential_thinking_example.py` for detailed demonstrations of algorithm design and code review workflows using these tools.
 
 ### Embedding Functions
 Chroma MCP supports several embedding functions: `default`, `cohere`, `openai`, `jina`, `voyageai`, and `roboflow`.
